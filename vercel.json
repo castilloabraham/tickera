@@ -4,10 +4,6 @@
       {
         "src": "app.py",
         "use": "@vercel/python",
-        "env": {
-                "PIP_NO_CACHE_DIR": "off"
-                }
-      }
     ],
     "routes": [
       {
