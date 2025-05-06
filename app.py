@@ -37,12 +37,13 @@ def submit():
     data.append(record)
     save_data(data)
 
-    # generar QR que contiene el ID
+    # generar QR en memoria
     qr = qrcode.make(uid)
-    qr_path = os.path.join(QR_FOLDER, f'{uid}.png')
-    qr.save(qr_path)
+    buffer = BytesIO()
+    qr.save(buffer, format='PNG')
+    qr_b64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
 
-    return render_template('result.html', uid=uid)
+    return render_template('result.html', uid=uid, qr_b64=qr_b64)
 
 @app.route('/qr/<uid>')
 def qr_image(uid):
