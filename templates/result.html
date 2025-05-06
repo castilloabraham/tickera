@@ -11,6 +11,7 @@
   <p>Tu código único es: <strong>{{ uid }}</strong></p>
   <p>Puedes escanear o descargar tu QR:</p>
   <img src="{{ url_for('qr_image', uid=uid) }}" alt="QR code"><br><br>
+
   <a href="{{ url_for('qr_image', uid=uid) }}" download="qr_{{ uid }}.png">Descargar QR</a><br><br>
   <a href="/verify">Verificar un código</a>
 </body>
