@@ -1,22 +1,19 @@
-import os, json, uuid
-from flask import Flask, render_template, request, send_from_directory, redirect, url_for
+import os
+import uuid
+import base64
+from io import BytesIO
+from flask import Flask, render_template, request, redirect, url_for
 import qrcode
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
 
-DATA_FILE = 'data.json'
-QR_FOLDER = os.path.join('static', 'qr_codes')
-os.makedirs(QR_FOLDER, exist_ok=True)
+# Leer cadena de conexión desde variable de entorno
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-def load_data():
-    if not os.path.exists(DATA_FILE):
-        return []
-    with open(DATA_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
-
-def save_data(data):
-    with open(DATA_FILE, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+def get_connection():
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 @app.route('/')
 def index():
@@ -27,17 +24,15 @@ def submit():
     name = request.form['name']
     hour = request.form['hour']
     uid = str(uuid.uuid4())
-    record = {
-        'id': uid,
-        'name': name,
-        'hour': hour,
-        'attendance': False
-    }
-    data = load_data()
-    data.append(record)
-    save_data(data)
 
-    # generar QR en memoria
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO info (id, name, hour, attendance) VALUES (%s, %s, %s, %s)",
+                (uid, name, hour, False)
+            )
+
+    # Generar QR en memoria (base64)
     qr = qrcode.make(uid)
     buffer = BytesIO()
     qr.save(buffer, format='PNG')
@@ -45,36 +40,24 @@ def submit():
 
     return render_template('result.html', uid=uid, qr_b64=qr_b64)
 
-@app.route('/qr/<uid>')
-def qr_image(uid):
-    return send_from_directory(QR_FOLDER, f'{uid}.png')
-
-@app.route('/verify', methods=['GET','POST'])
+@app.route('/verify', methods=['GET', 'POST'])
 def verify():
     record = None
-    # 1) obtener uid de POST o de GET
-    if request.method == 'POST':
-        uid = request.form.get('uid','').strip()
-    else:
-        uid = request.args.get('uid','').strip()
+    uid = request.form.get('uid', '').strip() if request.method == 'POST' else request.args.get('uid', '').strip()
 
-    # 2) si tenemos uid, buscar en data.json
     if uid:
-        data = load_data()
-        record = next((r for r in data if r['id'] == uid), None)
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM info WHERE id = %s", (uid,))
+                record = cur.fetchone()
 
-    # 3) renderizar plantilla pasando uid y record
     return render_template('verify.html', uid=uid, record=record)
-
 
 @app.route('/mark/<uid>', methods=['POST'])
 def mark(uid):
-    data = load_data()
-    for r in data:
-        if r['id'] == uid:
-            r['attendance'] = True
-            break
-    save_data(data)
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE info SET attendance = TRUE WHERE id = %s", (uid,))
     return redirect(url_for('verify') + f'?uid={uid}')
 
 if __name__ == '__main__':
