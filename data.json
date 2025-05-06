@@ -1,0 +1,26 @@
+[
+  {
+    "id": "c58620e1-1afc-4ff4-ada0-3a8813ec835b",
+    "name": "asdasd",
+    "hour": "11am",
+    "attendance": true
+  },
+  {
+    "id": "ee9db00b-bfe1-4087-ab59-fc4c59886836",
+    "name": "abrahamcd",
+    "hour": "11am",
+    "attendance": true
+  },
+  {
+    "id": "9166fe98-310b-4ac6-a5a2-fba4cbadd460",
+    "name": "a",
+    "hour": "11am",
+    "attendance": true
+  },
+  {
+    "id": "65432bc1-c2b4-4d39-b236-90f6f1d7a119",
+    "name": "Español",
+    "hour": "4pm",
+    "attendance": true
+  }
+]

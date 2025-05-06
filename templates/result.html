@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Tu QR</title></head>
+<body>
+  <nav>
+    <a href="{{ url_for('index') }}">Registro</a>
+    <a href="{{ url_for('verify') }}">Verificar</a>
+    <a href="{{ url_for('index') }}?view=results">Mis QR</a>
+  </nav>
+  <h1>¡Registro creado!</h1>
+  <p>Tu código único es: <strong>{{ uid }}</strong></p>
+  <p>Puedes escanear o descargar tu QR:</p>
+  <img src="{{ url_for('qr_image', uid=uid) }}" alt="QR code"><br><br>
+  <a href="{{ url_for('qr_image', uid=uid) }}" download="qr_{{ uid }}.png">Descargar QR</a><br><br>
+  <a href="/verify">Verificar un código</a>
+</body>
+</html>

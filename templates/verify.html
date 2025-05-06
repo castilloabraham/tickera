@@ -1,0 +1,83 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Verificar QR con cámara</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.7/html5-qrcode.min.js"></script>
+  <style>
+    #reader { width:300px; height:300px; border:1px solid #ccc; margin-bottom:1em; display:none; }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="{{ url_for('index') }}">Registro</a>
+    <a href="{{ url_for('verify') }}">Verificar</a>
+    <a href="{{ url_for('index') }}?view=results">Mis QR</a>
+  </nav>
+  
+  <h1>Verificar asistencia</h1>
+
+  <button id="start-camera">Escanear con cámara</button>
+  <div id="reader"></div>
+
+  <form id="manual-form" method="post" style="margin-top:1em;">
+    <label>O ingresa tu ID manualmente:
+      <input type="text" name="uid" required value="{{ uid }}">
+    </label>
+    <button type="submit">Buscar</button>
+  </form>
+
+  {% if uid %}
+    {% if record %}
+      <h2>Datos para {{ uid }}</h2>
+      <p><strong>Nombre:</strong> {{ record.name }}</p>
+      <p><strong>Hora:</strong> {{ record.hour }}</p>
+      <p><strong>Asistencia:</strong>
+         {{ '✅ Ya marcada' if record.attendance else '❌ No registrada' }}
+      </p>
+      {% if not record.attendance %}
+        <form action="{{ url_for('mark', uid=uid) }}" method="post">
+          <button type="submit">Marcar asistencia</button>
+        </form>
+      {% endif %}
+    {% else %}
+      <p style="color:red;">ID {{ uid }} no encontrado.</p>
+    {% endif %}
+  {% endif %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const startBtn = document.getElementById('start-camera');
+      const readerDiv = document.getElementById('reader');
+      const manualForm = document.getElementById('manual-form');
+
+      startBtn.addEventListener('click', () => {
+        readerDiv.style.display = 'block';
+        startBtn.disabled = true;
+        const html5QrCode = new Html5Qrcode("reader");
+
+        Html5Qrcode.getCameras()
+          .then(cameras => {
+            if (!cameras.length) throw new Error("No se encontraron cámaras");
+            const back = cameras.find(c=>/back|rear|environment/i.test(c.label));
+            const camId = back ? back.id : cameras[0].id;
+
+            return html5QrCode.start(
+              camId,
+              { fps:10, qrbox:{width:300,height:300} },
+              text => {
+                manualForm.uid.value = text;
+                html5QrCode.stop();
+                manualForm.submit();
+              },
+              err=> console.log("escaneando…", err)
+            );
+          })
+          .catch(err => {
+            alert("Error cámara/escaneo: " + err.message);
+          });
+      });
+    });
+  </script>
+</body>
+</html>
