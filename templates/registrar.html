@@ -12,27 +12,17 @@
     <a href="{{ url_for('verify') }}">Verificar</a>
   </nav>
   <div class="container">
-    <h1>Dashboard</h1>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Horario</th>
-          <th>Entradas Vendidas</th>
-          <th>Asistencias Registradas</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in resumen %}
-        <tr>
-          <td>{{ item.hour }}</td>
-          <td>{{ item.total_vendidas }}</td>
-          <td>{{ item.total_registradas }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
+    <h1>Registro de asistencia</h1>
+    <form action="/submit" method="post">
+      <label>Nombre: <input type="text" name="name" required></label><br><br>
+      <label>Hora:
+        <select name="hour">
+          <option value="11am">11 am</option>
+          <option value="4pm">4 pm</option>
+        </select>
+      </label><br><br>
+      <button type="submit">Generar QR</button>
+    </form>
   </div>
 </body>
 </html>

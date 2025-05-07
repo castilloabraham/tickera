@@ -1,10 +1,10 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verificar QR con cámara</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.7/html5-qrcode.min.js"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 
   <style>
@@ -13,9 +13,9 @@
 </head>
 <body>
   <nav>
-    <a href="{{ url_for('index') }}">Registro</a>
+    <a href="{{ url_for('index') }}">Inicio</a>
+    <a href="{{ url_for('registrar') }}">Registro</a>
     <a href="{{ url_for('verify') }}">Verificar</a>
-    <a href="{{ url_for('index') }}?view=results">Mis QR</a>
   </nav>
   <div class="container">
     <h1>Verificar asistencia</h1>
@@ -36,7 +36,7 @@
         <p><strong>Nombre:</strong> {{ record.name }}</p>
         <p><strong>Hora:</strong> {{ record.hour }}</p>
         <p><strong>Asistencia:</strong>
-          {{ '✅ Ya marcada' if record.attendance else '❌ No registrada' }}
+          {{ '❌ Esta entrada NO es valida ya fue registrada' if record.attendance else '✅ Esta entrada es valida aun no ha sido registrada' }}
         </p>
         {% if not record.attendance %}
           <form action="{{ url_for('mark', uid=uid) }}" method="post">

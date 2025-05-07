@@ -26,7 +26,26 @@ def get_connection():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT hour,
+                           COUNT(*) AS total_vendidas,
+                           COUNT(*) FILTER (WHERE attendance = TRUE) AS total_registradas
+                    FROM info
+                    GROUP BY hour
+                    ORDER BY hour
+                """)
+                resumen = cur.fetchall()
+    except Exception as e:
+        return f"Error al obtener datos: {str(e)}", 500
+
+    return render_template('index.html', resumen=resumen)
+
+@app.route('/registrar')
+def registrar():
+    return render_template('registrar.html')
 
 @app.route('/submit', methods=['POST'])
 def submit():
