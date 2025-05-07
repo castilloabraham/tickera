@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <title>Verificar QR con cámara</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.7/html5-qrcode.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
   <style>
     #reader { width:300px; height:300px; border:1px solid #ccc; margin-bottom:1em; display:none; }
   </style>
@@ -14,37 +16,37 @@
     <a href="{{ url_for('verify') }}">Verificar</a>
     <a href="{{ url_for('index') }}?view=results">Mis QR</a>
   </nav>
-  
-  <h1>Verificar asistencia</h1>
+  <div class="container">
+    <h1>Verificar asistencia</h1>
 
-  <button id="start-camera">Escanear con cámara</button>
-  <div id="reader"></div>
+    <button id="start-camera">Escanear con cámara</button>
+    <div id="reader"></div>
 
-  <form id="manual-form" method="post" style="margin-top:1em;">
-    <label>O ingresa tu ID manualmente:
-      <input type="text" name="uid" required value="{{ uid }}">
-    </label>
-    <button type="submit">Buscar</button>
-  </form>
+    <form id="manual-form" method="post" style="margin-top:1em;">
+      <label>O ingresa tu ID manualmente:
+        <input type="text" name="uid" required value="{{ uid }}">
+      </label>
+      <button type="submit">Buscar</button>
+    </form>
 
-  {% if uid %}
-    {% if record %}
-      <h2>Datos para {{ uid }}</h2>
-      <p><strong>Nombre:</strong> {{ record.name }}</p>
-      <p><strong>Hora:</strong> {{ record.hour }}</p>
-      <p><strong>Asistencia:</strong>
-         {{ '✅ Ya marcada' if record.attendance else '❌ No registrada' }}
-      </p>
-      {% if not record.attendance %}
-        <form action="{{ url_for('mark', uid=uid) }}" method="post">
-          <button type="submit">Marcar asistencia</button>
-        </form>
+    {% if uid %}
+      {% if record %}
+        <h2>Datos para {{ uid }}</h2>
+        <p><strong>Nombre:</strong> {{ record.name }}</p>
+        <p><strong>Hora:</strong> {{ record.hour }}</p>
+        <p><strong>Asistencia:</strong>
+          {{ '✅ Ya marcada' if record.attendance else '❌ No registrada' }}
+        </p>
+        {% if not record.attendance %}
+          <form action="{{ url_for('mark', uid=uid) }}" method="post">
+            <button type="submit">Marcar asistencia</button>
+          </form>
+        {% endif %}
+      {% else %}
+        <p style="color:red;">ID {{ uid }} no encontrado.</p>
       {% endif %}
-    {% else %}
-      <p style="color:red;">ID {{ uid }} no encontrado.</p>
     {% endif %}
-  {% endif %}
-
+  </div>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const startBtn = document.getElementById('start-camera');

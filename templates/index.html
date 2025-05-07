@@ -1,23 +1,27 @@
 <!doctype html>
 <html>
-<head><meta charset="utf-8"><title>Registro</title></head>
+<head>
+  <meta charset="utf-8"><title>Registro</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
 <body>
   <nav>
     <a href="{{ url_for('index') }}">Registro</a>
     <a href="{{ url_for('verify') }}">Verificar</a>
     <a href="{{ url_for('index') }}?view=results">Mis QR</a>
   </nav>
-  
-  <h1>Registro de asistencia</h1>
-  <form action="/submit" method="post">
-    <label>Nombre: <input type="text" name="name" required></label><br><br>
-    <label>Hora:
-      <select name="hour">
-        <option value="11am">11 am</option>
-        <option value="4pm">4 pm</option>
-      </select>
-    </label><br><br>
-    <button type="submit">Generar QR</button>
-  </form>
+  <div class="container">
+    <h1>Registro de asistencia</h1>
+    <form action="/submit" method="post">
+      <label>Nombre: <input type="text" name="name" required></label><br><br>
+      <label>Hora:
+        <select name="hour">
+          <option value="11am">11 am</option>
+          <option value="4pm">4 pm</option>
+        </select>
+      </label><br><br>
+      <button type="submit">Generar QR</button>
+    </form>
+  </div>
 </body>
 </html>
