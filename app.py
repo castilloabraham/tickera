@@ -8,6 +8,8 @@ import qrcode
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from flask import send_file
+from PIL import Image
+import io
 
 
 app = Flask(__name__)
@@ -115,5 +117,29 @@ def qr_image(uid):
     except Exception as e:
         return str(e)
 
+
+@app.route('/descargar_entrada/<uid>')
+def descargar_entrada_con_qr(uid):
+    # Abrir la imagen base (la entrada visual)
+    imagen_base = Image.open("static/entrada.png").convert("RGBA")
+
+    # Crear el código QR con la URL de verificación, por ejemplo
+    url_verificacion = f"/verify?uid={uid}"
+    qr = qrcode.make(url_verificacion)
+    qr = qr.resize((325, 325))  # Ajusta el tamaño si hace falta
+
+    # Pegar el QR en la esquina superior derecha (con márgenes)
+    margen = 10
+    posicion = (imagen_base.width - qr.width - margen, margen)
+    imagen_base.paste(qr, posicion)
+
+    # Guardar la imagen final en un buffer para enviar
+    buffer = io.BytesIO()
+    imagen_base.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    return send_file(buffer, mimetype='image/png', as_attachment=True, download_name=f"entrada_qr_{uid}.png")
+
 if __name__ == '__main__':
     app.run(debug=True)
+
