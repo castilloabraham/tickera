@@ -89,7 +89,8 @@ def verify():
                     cur.execute("SELECT * FROM info WHERE id = %s", (uid,))
                     record = cur.fetchone()
         except Exception as e:
-            return f"Error al consultar la base de datos: {str(e)}", 500
+            return render_template('error-busqueda.html')
+            # return f"Error al consultar la base de datos: {str(e)}", 500
 
     return render_template('verify.html', uid=uid, record=record)
 
@@ -101,8 +102,8 @@ def mark(uid):
                 cur.execute("UPDATE info SET attendance = TRUE WHERE id = %s", (uid,))
         return redirect(url_for('verify', uid=uid))
     except Exception as e:
-        return render_template('error-busqueda.html')
-        # return f"Error al actualizar asistencia: {str(e)}", 500
+        
+        return f"Error al actualizar asistencia: {str(e)}", 500
 
 # Función central para crear el QR como imagen en memoria
 def creacion_qr(uid):
