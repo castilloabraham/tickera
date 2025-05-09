@@ -10,6 +10,7 @@ from psycopg2.extras import RealDictCursor
 from flask import send_file
 from PIL import Image
 import io
+from PIL import Image
 
 
 app = Flask(__name__)
@@ -118,28 +119,47 @@ def qr_image(uid):
         return str(e)
 
 
+
+
 @app.route('/descargar_entrada/<uid>')
 def descargar_entrada_con_qr(uid):
-    # Abrir la imagen base (la entrada visual)
-    imagen_base = Image.open("static/entrada.png").convert("RGBA")
+    try:
+        # 1. Cargar la imagen base (entrada)
+        imagen_base = Image.open("static/entrada.png").convert("RGB")  # Forzar RGB
 
-    # Crear el código QR con la URL de verificación, por ejemplo
-    url_verificacion = f"/verify?uid={uid}"
-    qr = qrcode.make(url_verificacion)
-    qr = qr.resize((325, 325))  # Ajusta el tamaño si hace falta
+        # 2. Generar el código QR (asegurar tamaño y margen)
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            box_size=10,  # Ajusta según necesidad
+            border=4,
+        )
+        qr.add_data(f"/verify?uid={uid}")
+        qr.make(fit=True)
+        qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
 
-    # Pegar el QR en la esquina superior derecha (con márgenes)
-    margen = 10
-    posicion = (imagen_base.width - qr.width - margen, margen)
-    imagen_base.paste(qr, posicion)
+        # 3. Redimensionar (si es necesario) manteniendo relación de aspecto
+        qr_size = 325  # Tamaño deseado
+        qr_img = qr_img.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
 
-    # Guardar la imagen final en un buffer para enviar
-    buffer = io.BytesIO()
-    imagen_base.save(buffer, format="PNG")
-    buffer.seek(0)
+        # 4. Pegar el QR en la esquina superior derecha
+        margin = 20  # Margen para evitar bordes
+        position = (imagen_base.width - qr_img.width - margin, margin)
+        
+        # Crear una copia para no modificar la original
+        final_img = imagen_base.copy()
+        final_img.paste(qr_img, position)
 
-    return send_file(buffer, mimetype='image/png', as_attachment=True, download_name=f"entrada_qr_{uid}.png")
+        # 5. Guardar en buffer y enviar
+        buffer = io.BytesIO()
+        final_img.save(buffer, format="PNG", quality=100)  # Máxima calidad
+        buffer.seek(0)
 
-if __name__ == '__main__':
-    app.run(debug=True)
-
+        return send_file(
+            buffer,
+            mimetype='image/png',
+            as_attachment=True,
+            download_name=f"entrada_{uid}.png"
+        )
+    except Exception as e:
+        return f"Error al generar la entrada: {str(e)}", 500
