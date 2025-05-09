@@ -10,7 +10,6 @@ from psycopg2.extras import RealDictCursor
 from flask import send_file
 from PIL import Image
 import io
-from PIL import Image
 
 
 app = Flask(__name__)
@@ -103,63 +102,47 @@ def mark(uid):
         return redirect(url_for('verify', uid=uid))
     except Exception as e:
         return f"Error al actualizar asistencia: {str(e)}", 500
-    
+
+# Función central para crear el QR como imagen en memoria
+def creacion_qr(uid):
+    qr = qrcode.make(uid)
+    return qr  # devuelve objeto PIL.Image
+
+# Mostrar solo el QR
 @app.route('/qr_image/<uid>')
 def qr_image(uid):
     try:
-        # Generar el QR
-        qr = qrcode.make(uid)
+        qr = creacion_qr(uid)
         buffer = BytesIO()
         qr.save(buffer, format='PNG')
-        buffer.seek(0)  # Asegúrate de posicionar el puntero al inicio del buffer
-
-        # Retornar la imagen como respuesta
+        buffer.seek(0)
         return send_file(buffer, mimetype='image/png')
     except Exception as e:
         return str(e)
 
-
-
-
+# Descargar entrada con QR incrustado
 @app.route('/descargar_entrada/<uid>')
 def descargar_entrada_con_qr(uid):
     try:
-        # 1. Cargar la imagen base (entrada)
-        imagen_base = Image.open("static/entrada.png").convert("RGB")  # Forzar RGB
+        # Abrir la entrada base
+        imagen_base = Image.open("static/entrada.png").convert("RGBA")
 
-        # 2. Generar el código QR (asegurar tamaño y margen)
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_H,
-            box_size=10,  # Ajusta según necesidad
-            border=4,
-        )
-        qr.add_data(f"/verify?uid={uid}")
-        qr.make(fit=True)
-        qr_img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
+        # Obtener QR desde función común
+        qr = creacion_qr(uid).resize((325, 325))
 
-        # 3. Redimensionar (si es necesario) manteniendo relación de aspecto
-        qr_size = 325  # Tamaño deseado
-        qr_img = qr_img.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
+        # Posicionar QR sobre la imagen base
+        margen = 10
+        posicion = (imagen_base.width - qr.width - margen, margen)
+        imagen_base.paste(qr, posicion)
 
-        # 4. Pegar el QR en la esquina superior derecha
-        margin = 20  # Margen para evitar bordes
-        position = (imagen_base.width - qr_img.width - margin, margin)
-        
-        # Crear una copia para no modificar la original
-        final_img = imagen_base.copy()
-        final_img.paste(qr_img, position)
-
-        # 5. Guardar en buffer y enviar
+        # Enviar imagen final con QR
         buffer = io.BytesIO()
-        final_img.save(buffer, format="PNG", quality=100)  # Máxima calidad
+        imagen_base.save(buffer, format="PNG")
         buffer.seek(0)
-
-        return send_file(
-            buffer,
-            mimetype='image/png',
-            as_attachment=True,
-            download_name=f"entrada_{uid}.png"
-        )
+        return send_file(buffer, mimetype='image/png', as_attachment=True, download_name=f"entrada_qr_{uid}.png")
     except Exception as e:
-        return f"Error al generar la entrada: {str(e)}", 500
+        return str(e)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
